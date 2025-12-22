@@ -4,6 +4,8 @@ import "./globals.css";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 
+import { AuthProvider } from "@/context/AuthContext";
+
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
@@ -22,9 +24,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.variable} antialiased`}>
-        <ThemeProvider>
-          <SidebarProvider>{children}</SidebarProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <SidebarProvider>{children}</SidebarProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );
