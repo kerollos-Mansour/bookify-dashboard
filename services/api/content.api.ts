@@ -4,14 +4,14 @@ import apiClient from "./client";
 
 export interface Destination {
   _id: string;
-  title: string;
-  photo: string;
-  category: string;
-  searchConfig: {
-    location?: string;
-    checkIn?: string;
-    checkOut?: string;
-  };
+  name: string;
+  location: string;
+  price: string;
+  image?: string;
+  categoryId?: string;
+  bestSeller: boolean;
+  rating: number;
+  address?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -34,21 +34,36 @@ export interface Review {
   createdAt: string;
 }
 
+// Helper to remove empty strings from payload
+const cleanPayload = (data: Partial<Destination>) => {
+  const cleaned: Partial<Destination> = { ...data };
+  Object.keys(cleaned).forEach((key) => {
+    const k = key as keyof Destination;
+    if (cleaned[k] === "") {
+      delete cleaned[k];
+    }
+  });
+  return cleaned;
+};
+
 export const contentApi = {
   // Destinations
   getAllDestinations: async () => {
     const response = await apiClient.get("/destinations");
-    return response.data;
+    return response.data.data;
   },
 
   createDestination: async (data: Partial<Destination>) => {
-    const response = await apiClient.post("/destinations", data);
-    return response.data;
+    const cleanedData = cleanPayload(data);
+    console.log("Creating Destination Payload:", cleanedData);
+    const response = await apiClient.post("/destinations", cleanedData);
+    return response.data.data;
   },
 
   updateDestination: async (id: string, data: Partial<Destination>) => {
-    const response = await apiClient.put(`/destinations/${id}`, data);
-    return response.data;
+    const cleanedData = cleanPayload(data);
+    const response = await apiClient.put(`/destinations/${id}`, cleanedData);
+    return response.data.data;
   },
 
   deleteDestination: async (id: string) => {
