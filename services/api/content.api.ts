@@ -19,9 +19,14 @@ export interface Destination {
 export interface Category {
   _id: string;
   name: string;
-  description: string;
+  slug: string;
+  description?: string;
   icon?: string;
-  propertyCount: number;
+  image?: string;
+  isActive: boolean;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Review {
@@ -35,14 +40,26 @@ export interface Review {
 }
 
 // Helper to remove empty strings from payload
-const cleanPayload = (data: Partial<Destination>) => {
-  const cleaned: Partial<Destination> = { ...data };
+const cleanPayload = <T extends object>(data: Partial<T>) => {
+  const cleaned: Partial<T> = { ...data };
+  const fieldsToRemove = ["_id", "__v", "createdAt", "updatedAt"];
+
   Object.keys(cleaned).forEach((key) => {
-    const k = key as keyof Destination;
-    if (cleaned[k] === "") {
+    const k = key as keyof T;
+    // Remove if field is listed as immutable/internal
+    if (fieldsToRemove.includes(key)) {
+      delete cleaned[k];
+    }
+    // Remove if value is explicitly empty string, but keep 0 and false
+    else if (cleaned[k] === "") {
+      delete cleaned[k];
+    }
+    // Remove null or undefined to avoid backend validation errors
+    else if (cleaned[k] === null || cleaned[k] === undefined) {
       delete cleaned[k];
     }
   });
+
   return cleaned;
 };
 
@@ -74,17 +91,24 @@ export const contentApi = {
   // Categories
   getAllCategories: async () => {
     const response = await apiClient.get("/categories");
-    return response.data;
+     return response.data.data.categories;
+  },
+
+  getCategoryById: async (id: string) => {
+    const response = await apiClient.get(`/categories/${id}`);
+    return response.data.data.category;
   },
 
   createCategory: async (data: Partial<Category>) => {
-    const response = await apiClient.post("/categories", data);
-    return response.data;
+    const cleanedData = cleanPayload(data);
+    const response = await apiClient.post("/categories", cleanedData);
+    return response.data.data;
   },
 
   updateCategory: async (id: string, data: Partial<Category>) => {
-    const response = await apiClient.put(`/categories/${id}`, data);
-    return response.data;
+    const cleanedData = cleanPayload(data);
+    const response = await apiClient.patch(`/categories/${id}`, cleanedData);
+    return response.data.data.category;
   },
 
   deleteCategory: async (id: string) => {

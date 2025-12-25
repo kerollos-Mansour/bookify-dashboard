@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Destination } from "@/services/api/content.api";
+import { Destination, Category, contentApi } from "@/services/api/content.api";
 
 interface DestinationFormProps {
     initialData?: Partial<Destination>;
@@ -14,6 +14,8 @@ export default function DestinationForm({
     onCancel,
     isOpen,
 }: DestinationFormProps) {
+    const [categories, setCategories] = useState<Category[]>([]);
+
     const [formData, setFormData] = useState<Partial<Destination>>({
         name: "",
         location: "",
@@ -24,6 +26,18 @@ export default function DestinationForm({
         rating: 0,
         address: "",
     });
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const data = await contentApi.getAllCategories();
+                setCategories(data);
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     useEffect(() => {
         if (initialData) {
@@ -133,16 +147,21 @@ export default function DestinationForm({
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Category ID
+                            Category
                         </label>
-                        <input
-                            type="text"
+                        <select
+                            required
                             value={formData.categoryId || ""}
                             onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                            className="w-full mt-1 px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none"
-                            placeholder="Category ID"
-                        />
-                        {/* Note: In a real app we would fetch categories and show a select */}
+                            className="w-full mt-1 px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none appearance-none"
+                        >
+                            <option value="">Select a category</option>
+                            {categories.map((cat) => (
+                                <option key={cat._id} value={cat._id}>
+                                    {cat.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>

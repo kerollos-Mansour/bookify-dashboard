@@ -190,13 +190,7 @@ export default function DestinationsPage() {
                 )}
               </div>
 
-              {destination.categoryId && (
-                <div className="mt-2">
-                  <span className="text-xs text-gray-400 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded">
-                    ID: {destination.categoryId.substring(0, 6)}...
-                  </span>
-                </div>
-              )}
+
 
               <div className="mt-auto pt-4 flex gap-2">
                 <button
