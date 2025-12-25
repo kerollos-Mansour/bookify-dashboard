@@ -18,7 +18,12 @@ export default function LoginPage() {
         try {
             await login(email, password);
         } catch (err: any) {
-            setError(err.message || "Login failed. Please check your credentials.");
+            const errorMessage =
+                err.response?.data?.message ||
+                err.response?.data?.error ||
+                err.message ||
+                "Login failed. Please check your credentials.";
+            setError(errorMessage);
             setIsLoading(false);
         }
     };
