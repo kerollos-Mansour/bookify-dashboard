@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Category, contentApi } from "@/services/api/content.api";
 import CategoryForm from "@/components/categories/CategoryForm";
+import toast from "react-hot-toast";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -21,11 +22,11 @@ export default function CategoriesPage() {
   const fetchCategories = async () => {
     setIsLoading(true);
     try {
-      const data = await contentApi.getAllCategories();
+      const data = await contentApi.getAllCategories(true);
       setCategories(data);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      alert("Failed to load categories");
+      toast.error("Failed to load categories");
     } finally {
       setIsLoading(false);
     }
@@ -46,49 +47,98 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this category?")) return;
-
-    try {
-      await contentApi.deleteCategory(id);
-      alert("Category deleted successfully");
-      fetchCategories();
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      alert("Failed to delete category");
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-2">
+        <p className="font-medium">Delete this category?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await contentApi.deleteCategory(id);
+                toast.success("Category deleted successfully");
+                fetchCategories();
+              } catch (error) {
+                console.error("Error deleting category:", error);
+                toast.error("Failed to delete category");
+              }
+            }}
+            className="rounded bg-red-500 px-3 py-1 text-xs text-white hover:bg-red-600"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="rounded bg-gray-200 px-3 py-1 text-xs text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 });
   };
 
   const handleSubmit = async (data: Partial<Category>) => {
     try {
       if (editingCategory) {
         await contentApi.updateCategory(editingCategory._id, data);
-        alert("Category updated successfully");
+        toast.success("Category updated successfully");
       } else {
         await contentApi.createCategory(data);
-        alert("Category created successfully");
+        toast.success("Category created successfully");
       }
       setIsModalOpen(false);
       fetchCategories();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving category:", error);
-      alert(editingCategory ? "Failed to update category" : "Failed to create category");
+      const errorMessage = error.response?.data?.message || error.message;
+
+      if (
+        errorMessage?.toLowerCase().includes("exist") ||
+        errorMessage?.toLowerCase().includes("duplicate") ||
+        errorMessage?.includes("11000")
+      ) {
+        toast.error("Category already exists");
+      } else {
+        toast.error(errorMessage || (editingCategory ? "Failed to update category" : "Failed to create category"));
+      }
     }
   };
 
   const handleSeed = async () => {
-    if (!confirm("Add suggested categories to your database?")) return;
-    setIsLoading(true);
-    try {
-      for (const cat of suggestedCategories) {
-        await contentApi.createCategory(cat);
-      }
-      alert("Suggested categories added successfully!");
-      fetchCategories();
-    } catch (error) {
-      console.error("Error seeding categories:", error);
-      alert("Failed to seed categories. Some might already exist.");
-      fetchCategories();
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-2">
+        <p className="font-medium">Add suggested categories?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              setIsLoading(true);
+              try {
+                for (const cat of suggestedCategories) {
+                  await contentApi.createCategory(cat);
+                }
+                toast.success("Suggested categories added successfully!");
+                fetchCategories();
+              } catch (error) {
+                console.error("Error seeding categories:", error);
+                toast.error("Failed to seed categories. Some might already exist.");
+                fetchCategories();
+              }
+            }}
+            className="rounded bg-brand-500 px-3 py-1 text-xs text-white hover:bg-brand-600"
+          >
+            Yes, Add All
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="rounded bg-gray-200 px-3 py-1 text-xs text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 });
   };
 
   return (
@@ -220,4 +270,3 @@ export default function CategoriesPage() {
     </div>
   );
 }
-

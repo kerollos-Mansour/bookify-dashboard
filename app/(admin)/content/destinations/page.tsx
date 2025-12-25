@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Destination, contentApi } from "@/services/api/content.api";
 import DestinationForm from "@/components/destinations/DestinationForm";
 
+import { toast } from "react-hot-toast";
+
 export default function DestinationsPage() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -17,18 +19,19 @@ export default function DestinationsPage() {
       const data = await contentApi.getAllDestinations();
       if (Array.isArray(data)) {
         setDestinations(data);
+      } else if (data?.destinations && Array.isArray(data.destinations)) {
+        setDestinations(data.destinations);
+      } else if (data?.data && Array.isArray(data.data)) {
+        setDestinations(data.data);
       } else {
-        if (data?.data && Array.isArray(data.data)) {
-          setDestinations(data.data);
-        } else {
-          console.error("Unexpected data format", data);
-          setDestinations([]);
-        }
+        console.error("Unexpected data format", data);
+        setDestinations([]);
       }
       setError(null);
     } catch (err) {
       setError("Failed to fetch destinations");
       console.error(err);
+      toast.error("Failed to fetch destinations");
     } finally {
       setIsLoading(false);
     }
@@ -43,8 +46,10 @@ export default function DestinationsPage() {
       await contentApi.createDestination(data);
       await fetchDestinations();
       setIsFormOpen(false);
-    } catch (err) {
-      alert("Failed to create destination");
+      toast.success("Destination created successfully");
+    } catch (err: any) {
+      const message = err.response?.data?.message || "Failed to create destination";
+      toast.error(message);
       console.error(err);
     }
   };
@@ -56,22 +61,47 @@ export default function DestinationsPage() {
       await fetchDestinations();
       setIsFormOpen(false);
       setEditingDestination(undefined);
-    } catch (err) {
-      alert("Failed to update destination");
+      toast.success("Destination updated successfully");
+    } catch (err: any) {
+      const message = err.response?.data?.message || "Failed to update destination";
+      toast.error(message);
       console.error(err);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this destination?")) {
-      try {
-        await contentApi.deleteDestination(id);
-        await fetchDestinations();
-      } catch (err) {
-        alert("Failed to delete destination");
-        console.error(err);
-      }
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-2">
+        <p className="font-medium">Delete this destination?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await contentApi.deleteDestination(id);
+                await fetchDestinations();
+                toast.success("Destination deleted");
+              } catch (err: any) {
+                const message = err.response?.data?.message || "Failed to delete destination";
+                toast.error(message);
+                console.error(err);
+              }
+            }}
+            className="px-3 py-1 text-sm text-white bg-red-600 rounded-md hover:bg-red-700"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 5000,
+    });
   };
 
   const handleToggleBestSeller = async (destination: Destination) => {
@@ -82,8 +112,10 @@ export default function DestinationsPage() {
       setDestinations(destinations.map(d =>
         d._id === destination._id ? { ...d, bestSeller: !d.bestSeller } : d
       ));
-    } catch (err) {
-      alert("Failed to update status");
+      toast.success(destination.bestSeller ? "Removed from best sellers" : "Added to best sellers");
+    } catch (err: any) {
+      const message = err.response?.data?.message || "Failed to update status";
+      toast.error(message);
       console.error(err);
     }
   };
