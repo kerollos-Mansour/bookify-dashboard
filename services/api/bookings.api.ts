@@ -1,14 +1,24 @@
 import apiClient from "./client";
 
-// Booking API endpoints
+// Booking API endpoints - Updated to match your backend
 
 export interface Booking {
   _id: string;
-  user: string;
-  hotel: string;
-  room: string;
-  checkIn: string;
-  checkOut: string;
+  userId: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+  hotelId: {
+    _id: string;
+    name: string;
+  };
+  roomId: {
+    _id: string;
+    name: string;
+  };
+  checkInDate: string;
+  checkOutDate: string;
   totalPrice: number;
   status: "pending" | "confirmed" | "cancelled" | "completed";
   paymentStatus: "pending" | "paid" | "failed";
@@ -27,7 +37,7 @@ export interface GetBookingsParams {
 }
 
 export const bookingsApi = {
-  // Get all bookings with pagination and filtering
+  // Get all bookings (Admin only)
   getAllBookings: async (params?: GetBookingsParams) => {
     const response = await apiClient.get("/bookings", { params });
     return response.data;
@@ -39,17 +49,27 @@ export const bookingsApi = {
     return response.data;
   },
 
-  // Update booking status
+  // Get user's own bookings
+  getUserBookings: async () => {
+    const response = await apiClient.get("/bookings/my-bookings");
+    return response.data;
+  },
+
+  // Create new booking
+  createBooking: async (data: Partial<Booking>) => {
+    const response = await apiClient.post("/bookings", data);
+    return response.data;
+  },
+
+  // Update booking status (Admin only)
   updateBookingStatus: async (id: string, status: Booking["status"]) => {
-    const response = await apiClient.patch(`/bookings/${id}/status`, {
-      status,
-    });
+    const response = await apiClient.put(`/bookings/${id}/status`, { status });
     return response.data;
   },
 
   // Cancel booking
   cancelBooking: async (id: string) => {
-    const response = await apiClient.patch(`/bookings/${id}/cancel`);
+    const response = await apiClient.put(`/bookings/${id}/cancel`);
     return response.data;
   },
 };
