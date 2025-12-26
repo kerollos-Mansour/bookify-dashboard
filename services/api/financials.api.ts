@@ -14,10 +14,42 @@ export interface RevenueReport {
 
 export interface Transaction {
   _id: string;
-  booking: string;
-  amount: number;
-  status: "pending" | "completed" | "failed";
+  userId: {
+    _id: string;
+    email: string;
+    name: string;
+  };
+  hotelId: {
+    _id: string;
+    name: string;
+  };
+  roomId: string;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  subTotal: number;
+  pricePerNight: number;
+  totalPrice: number;
+  currency: string;
+  status: string;
+  couponId: string | null;
+  paymentStatus: string;
+  paymentMethod: string;
+  paymentIntentId: string;
   createdAt: string;
+  bookingNumber: string;
+  fees: number;
+  updatedAt: string;
+  __v: number;
+}
+
+export interface TransactionsResponse {
+  transactions: Transaction[];
+  pagination: {
+    total: number;
+    page: number;
+    pages: number;
+  };
 }
 
 export interface CouponUsage {

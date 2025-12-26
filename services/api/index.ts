@@ -12,7 +12,12 @@ export { dashboardApi } from "./dashboard.api";
 export type { User, GetUsersParams } from "./users.api";
 export type { Hotel, GetHotelsParams } from "./hotels.api";
 export type { Booking, GetBookingsParams } from "./bookings.api";
-export type { RevenueReport, Transaction, CouponUsage } from "./financials.api";
+export type {
+  RevenueReport,
+  Transaction,
+  CouponUsage,
+  TransactionsResponse,
+} from "./financials.api";
 export type { Destination, Category, Review } from "./content.api";
 export type {
   DashboardStats,

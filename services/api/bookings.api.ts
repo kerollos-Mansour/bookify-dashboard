@@ -4,25 +4,23 @@ import apiClient from "./client";
 
 export interface Booking {
   _id: string;
-  userId: {
-    _id: string;
-    username: string;
-    email: string;
-  };
-  hotelId: {
-    _id: string;
-    name: string;
-  };
-  roomId: {
-    _id: string;
-    name: string;
-  };
-  checkInDate: string;
-  checkOutDate: string;
+  userId: string;
+  hotelId: string;
+  roomId: string;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  pricePerNight: number;
   totalPrice: number;
-  status: "pending" | "confirmed" | "cancelled" | "completed";
-  paymentStatus: "pending" | "paid" | "failed";
+  guests: number;
+  currency: string;
+  status: string;
+  couponId: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  paymentIntentId: string;
   createdAt: string;
+  fees: number;
   updatedAt: string;
 }
 

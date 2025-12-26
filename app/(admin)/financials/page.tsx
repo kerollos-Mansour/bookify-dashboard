@@ -1,19 +1,23 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { bookingsApi, Booking } from "@/services/api";
+import { financialsApi, Transaction as ApiTransaction } from "@/services/api";
 
-interface Transaction {
+interface TransactionRow {
   id: string;
   date: string;
   bookingId: string;
   amount: string;
   status: string;
-  user: string;
+  userId: {
+    _id?: string;
+    email?: string;
+    name?: string;
+  };
 }
 
 export default function FinancialsPage() {
   const [selectedRange, setSelectedRange] = useState("week");
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionRow[]>([]);
   const [stats, setStats] = useState({
     totalRevenue: 0,
     completedBookings: 0,
@@ -25,43 +29,31 @@ export default function FinancialsPage() {
     const fetchFinancialData = async () => {
       try {
         setLoading(true);
-        const bookingsData = await bookingsApi.getAllBookings();
-        const bookings = Array.isArray(bookingsData) ? bookingsData : [];
+        const [revenueData, transactionsData] = await Promise.all([
+          financialsApi.getRevenueReport(),
+          financialsApi.getTransactions({ limit: 10 }),
+        ]);
 
-        // Calculate stats
-        const paidBookings = bookings.filter(
-          (b: Booking) => b.paymentStatus === "paid"
-        );
-        const totalRevenue = paidBookings.reduce(
-          (sum: number, b: Booking) => sum + b.totalPrice,
-          0
-        );
-        const completedBookings = bookings.filter(
-          (b: Booking) => b.status === "completed"
-        ).length;
-        const averageBookingValue =
-          paidBookings.length > 0 ? totalRevenue / paidBookings.length : 0;
+        if (revenueData) {
+          setStats({
+            totalRevenue: revenueData.totalRevenue || 0,
+            completedBookings: revenueData.completedBookings || 0,
+            averageBookingValue: revenueData.averageBookingValue || 0,
+          });
+        }
 
-        setStats({
-          totalRevenue,
-          completedBookings,
-          averageBookingValue,
-        });
-
-        // Convert bookings to transactions
-        const transactionsList: Transaction[] = paidBookings
-          .slice(0, 5)
-          .map((booking: Booking) => ({
-            id: booking._id,
-            date: new Date(booking.createdAt).toLocaleDateString(),
-            bookingId: booking._id.slice(-6).toUpperCase(),
-            amount: `$${booking.totalPrice.toFixed(2)}`,
-            status: booking.paymentStatus,
-            user:
-              booking.userId?.username || booking.userId?.email || "Unknown",
-          }));
-
-        setTransactions(transactionsList);
+        if (transactionsData && transactionsData.transactions) {
+          const transactionsList: TransactionRow[] =
+            transactionsData.transactions.map((t: ApiTransaction) => ({
+              id: t._id,
+              date: new Date(t.createdAt).toLocaleDateString(),
+              bookingId: t.bookingNumber || t._id.slice(-6).toUpperCase(),
+              amount: `$${t.totalPrice.toFixed(2)}`,
+              status: t.paymentStatus,
+              userId: t.userId,
+            }));
+          setTransactions(transactionsList);
+        }
       } catch (error) {
         console.error("Error fetching financial data:", error);
       } finally {
@@ -344,7 +336,7 @@ export default function FinancialsPage() {
                       {transaction.date}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                      {transaction.user}
+                      {transaction.userId.name}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                       {transaction.bookingId}
