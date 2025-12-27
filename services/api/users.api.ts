@@ -22,6 +22,11 @@ export interface GetUsersParams {
   isBlocked?: boolean;
 }
 
+// NEW: Interface for reset password data
+export interface ResetPasswordData {
+  newPassword: string;
+}
+
 export const usersApi = {
   // Get all users with pagination and filtering
   getAllUsers: async (params?: GetUsersParams) => {
@@ -56,6 +61,19 @@ export const usersApi = {
   // Ban/Unban user
   toggleUserStatus: async (id: string) => {
     const response = await apiClient.patch(`/users/${id}/toggle-status`);
+    return response.data;
+  },
+
+  // NEW: Reset user password
+  resetPassword: async (id: string, data: ResetPasswordData) => {
+    const response = await apiClient.post(`/users/${id}/reset-password`, data);
+    return response.data;
+  },
+
+  // OPTIONAL: Add a dedicated endpoint for admin to reset password
+  // This might be different from the regular reset-password endpoint
+  adminResetPassword: async (id: string, data: ResetPasswordData) => {
+    const response = await apiClient.post(`/users/${id}/admin-reset-password`, data);
     return response.data;
   },
 };
