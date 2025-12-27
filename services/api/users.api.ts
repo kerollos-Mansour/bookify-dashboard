@@ -4,10 +4,11 @@ import apiClient from "./client";
 
 export interface User {
   _id: string;
-  username: string;
+  name: string;
   email: string;
+  phoneNo: string;
   role: "user" | "admin";
-  isActive: boolean;
+  isBlocked: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -16,8 +17,9 @@ export interface GetUsersParams {
   page?: number;
   limit?: number;
   search?: string;
+  phoneNo?: string;
   role?: "user" | "admin";
-  isActive?: boolean;
+  isBlocked?: boolean;
 }
 
 export const usersApi = {
