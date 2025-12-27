@@ -5,11 +5,16 @@ import apiClient from "./client";
 export interface Destination {
   _id: string;
   name: string;
-  location: string;
-  price: string;
+  location?: string;
+  price?: string;
   image?: string;
   categoryId?: string;
-  category?: Category | string;
+  category?: Category | string | null;
+  searchConfig?: {
+    location?: string;
+    city?: string;
+    minRate?: number;
+  };
   bestSeller: boolean;
   rating: number;
   createdAt: string;
@@ -31,12 +36,20 @@ export interface Category {
 
 export interface Review {
   _id: string;
-  user: string;
-  hotel: string;
+  userid: {
+    _id: string;
+    username: string;
+    email?: string;
+  } | string | null;
+  hotelid: {
+    _id: string;
+    name: string;
+  } | string | null;
   rating: number;
   comment: string;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
+  reviewDate?: string;
 }
 
 // Helper to remove empty strings from payload
@@ -63,85 +76,24 @@ const cleanPayload = <T extends object>(data: Partial<T>) => {
   return cleaned;
 };
 
-// Helper to transform frontend data to backend schema
-const transformForBackend = (data: Partial<Destination>) => {
-  const transformed: any = { ...data };
-  const searchConfig: any = {};
-
-  if (transformed.location) {
-    searchConfig.location = transformed.location;
-    delete transformed.location;
-  }
-
-  if (transformed.price) {
-    // Extract number from price string (e.g., "$1000" -> 1000)
-    const priceNum = parseFloat(String(transformed.price).replace(/[^0-9.]/g, ''));
-    if (!isNaN(priceNum)) {
-      searchConfig.minRate = priceNum;
-    }
-    delete transformed.price;
-  }
-
-  // If we built a searchConfig, assign it
-  if (Object.keys(searchConfig).length > 0) {
-    transformed.searchConfig = {
-      ...transformed.searchConfig, // preserve existing if any
-      ...searchConfig
-    };
-  }
-
-  return transformed;
-};
-
-// Helper to map backend schema to frontend fields
-const transformFromBackend = (data: any): Destination => {
-  if (!data) return data;
-
-  let categoryId = data.categoryId;
-
-  // If categoryId is an object (populated), extract its _id
-  if (categoryId && typeof categoryId === 'object' && (categoryId as any)._id) {
-    categoryId = (categoryId as any)._id;
-  }
-
-  // If no categoryId found yet, look at data.category
-  if (!categoryId && data.category) {
-    if (typeof data.category === 'string') {
-      categoryId = data.category;
-    } else if (typeof data.category === 'object' && (data.category as any)._id) {
-      categoryId = (data.category as any)._id;
-    }
-  }
-
-  return {
-    ...data,
-    categoryId,
-    // Map nested searchConfig fields to top-level if missing
-    location: data.searchConfig?.location || data.location || data.searchConfig?.city || '',
-    price: data.searchConfig?.minRate ? String(data.searchConfig.minRate) : (data.price || ''),
-  };
-};
-
 export const contentApi = {
   // Destinations
   getAllDestinations: async () => {
     const response = await apiClient.get("/destinations");
-    return response.data.data.destinations.map(transformFromBackend);
+    return response.data.data.destinations;
   },
 
   createDestination: async (data: Partial<Destination>) => {
-    const transformedData = transformForBackend(data);
-    const cleanedData = cleanPayload(transformedData);
+    const cleanedData = cleanPayload(data);
     console.log("Creating Destination Payload:", cleanedData);
     const response = await apiClient.post("/destinations", cleanedData);
-    return transformFromBackend(response.data.data.destination);
+    return response.data.data.destination;
   },
 
   updateDestination: async (id: string, data: Partial<Destination>) => {
-    const transformedData = transformForBackend(data);
-    const cleanedData = cleanPayload(transformedData);
+    const cleanedData = cleanPayload(data);
     const response = await apiClient.patch(`/destinations/${id}`, cleanedData);
-    return transformFromBackend(response.data.data.destination);
+    return response.data.data.destination;
   },
 
   deleteDestination: async (id: string) => {
@@ -185,17 +137,18 @@ export const contentApi = {
     limit?: number;
   }) => {
     const response = await apiClient.get("/reviews", { params });
-    return response.data;
+    const data = response.data;
+    return { reviews: data.data, pagination: data.pagination || {} };
   },
 
   approveReview: async (id: string) => {
     const response = await apiClient.patch(`/reviews/${id}/approve`);
-    return response.data;
+    return response.data.data.review;
   },
 
   rejectReview: async (id: string) => {
     const response = await apiClient.patch(`/reviews/${id}/reject`);
-    return response.data;
+    return response.data.data.review;
   },
 
   // Image upload

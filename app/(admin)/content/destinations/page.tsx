@@ -196,7 +196,7 @@ export default function DestinationsPage() {
               </div>
               <div className="absolute bottom-2 left-2">
                 <span className="px-2 py-1 text-xs font-semibold text-white bg-black/50 rounded-md backdrop-blur-sm">
-                  {destination.price}
+                  {destination.searchConfig?.minRate ? `$${destination.searchConfig.minRate}` : (destination.price || "N/A")}
                 </span>
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function DestinationsPage() {
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                         <path fillRule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 10 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.006.003.002.001.003.001a.75.75 0 00.014-.044zM10 7a2 2 0 100 4 2 2 0 000-4z" clipRule="evenodd" />
                       </svg>
-                      {destination.location}
+                      {destination.searchConfig?.location || destination.searchConfig?.city || destination.location || "Unknown"}
                     </span>
                   </p>
                 </div>
