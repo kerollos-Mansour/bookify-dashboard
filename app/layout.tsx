@@ -4,6 +4,9 @@ import "./globals.css";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 
+import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "react-hot-toast"; 
+
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
@@ -22,9 +25,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.variable} antialiased`}>
-        <ThemeProvider>
-          <SidebarProvider>{children}</SidebarProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <SidebarProvider>{children}</SidebarProvider>
+            <Toaster position="top-center" />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

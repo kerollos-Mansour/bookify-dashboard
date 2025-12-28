@@ -11,12 +11,13 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Important for cookies/sessions
 });
 
 // Request interceptor - Add auth token to requests
 apiClient.interceptors.request.use(
   (config) => {
-    // TODO: Get token from your auth state management (e.g., localStorage, Redux, Context)
+    // Get token from localStorage
     const token =
       typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
@@ -31,9 +32,12 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors globally
+// Response interceptor - Handle errors globally and extract data
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
+    if (response.data && response.data.data) {
+      return { ...response, data: response.data.data };
+    }
     return response;
   },
   (error) => {
@@ -43,13 +47,15 @@ apiClient.interceptors.response.use(
         case 401:
           // Unauthorized - redirect to login
           if (typeof window !== "undefined") {
-            // TODO: Implement logout logic
+            localStorage.removeItem("authToken");
             console.error("Unauthorized - please login again");
+            // Optionally redirect to login page
+            // window.location.href = "/login";
           }
           break;
         case 403:
           // Forbidden
-          console.error("Access forbidden");
+          console.error("Access forbidden - insufficient permissions");
           break;
         case 404:
           console.error("Resource not found");
