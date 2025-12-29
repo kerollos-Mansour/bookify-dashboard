@@ -47,12 +47,21 @@ export default function DestinationForm({
 
     useEffect(() => {
         if (initialData) {
+            let categoryId = initialData.categoryId || "";
+            if (!categoryId && initialData.category) {
+                if (typeof initialData.category === 'string') {
+                    categoryId = initialData.category;
+                } else if (typeof initialData.category === 'object' && (initialData.category as any)._id) {
+                    categoryId = (initialData.category as any)._id;
+                }
+            }
+
             setFormData({
                 name: initialData.name || "",
-                location: initialData.location || "",
-                price: initialData.price || "",
+                location: initialData.searchConfig?.location || initialData.searchConfig?.city || initialData.location || "",
+                price: initialData.searchConfig?.minRate ? String(initialData.searchConfig.minRate) : (initialData.price || ""),
                 image: initialData.image || "",
-                categoryId: initialData.categoryId || "",
+                categoryId,
                 bestSeller: initialData.bestSeller || false,
                 rating: initialData.rating || 0,
             });
@@ -90,7 +99,20 @@ export default function DestinationForm({
         }
 
         try {
-            await onSubmit({ ...formData, image: imageUrl });
+            const payload: any = {
+                ...formData,
+                image: imageUrl,
+                searchConfig: {
+                    ...formData.searchConfig,
+                    location: formData.location,
+                    minRate: parseFloat(String(formData.price).replace(/[^0-9.]/g, '')),
+                }
+            };
+
+            delete payload.location;
+            delete payload.price;
+
+            await onSubmit(payload);
         } catch (error) {
             console.error("Submit failed", error);
         } finally {
