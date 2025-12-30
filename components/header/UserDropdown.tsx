@@ -1,10 +1,12 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "../../context/AuthContext";
 
 const UserDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { logout } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -20,6 +22,9 @@ const UserDropdown: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handelLogout=()=>{
+    logout();
+  }
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -109,7 +114,7 @@ const UserDropdown: React.FC = () => {
             </Link>
           </div>
           <div className="p-2 border-t border-gray-200 dark:border-gray-800">
-            <button className="flex items-center w-full gap-3 px-3 py-2 text-sm font-medium text-error-600 rounded-lg hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-500/10">
+            <button onClick={handelLogout} className="flex items-center w-full gap-3 px-3 py-2 text-sm font-medium text-error-600 rounded-lg hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-500/10">
               <svg
                 className="w-5 h-5"
                 fill="none"

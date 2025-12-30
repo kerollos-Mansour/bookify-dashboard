@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
+import { useAuth } from "../context/AuthContext";
 import {
   GridIcon,
   UserCircleIcon,
@@ -22,6 +23,7 @@ type NavItem = {
   icon: React.ReactNode;
   path?: string;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  roles?: string[];
 };
 
 const navItems: NavItem[] = [
@@ -34,6 +36,7 @@ const navItems: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "User Management",
     path: "/users",
+    roles: ["admin"], // Admin only
   },
   {
     icon: <BuildingIcon />,
@@ -52,6 +55,13 @@ const navItems: NavItem[] = [
     icon: <CurrencyDollarIcon />,
     name: "Financials",
     path: "/financials",
+    roles: ["admin"], // Admin only
+  },
+  {
+    icon: <DocumentIcon />,
+    name: "Chat",
+    path: "/chat",
+    roles: ["admin", "vendor"], // Vendor and Admin
   },
 ];
 
@@ -64,6 +74,7 @@ const othersItems: NavItem[] = [
       { name: "Categories", path: "/content/categories", pro: false },
       { name: "Reviews", path: "/content/reviews", pro: false },
     ],
+    roles: ["admin"], // Admin only
   },
   {
     icon: <CogIcon />,
@@ -74,7 +85,20 @@ const othersItems: NavItem[] = [
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { user } = useAuth();
   const pathname = usePathname();
+
+
+  // Filter menu items based on user role
+  const filterByRole = (items: NavItem[]) => {
+    return items.filter((item) => {
+      if (!item.roles) return true; // No role restriction
+      return item.roles.includes(user?.role || "user");
+    });
+  };
+
+  const filteredNavItems = filterByRole(navItems);
+  const filteredOthersItems = filterByRole(othersItems);
 
   const renderMenuItems = (
     navItems: NavItem[],
@@ -330,7 +354,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontalDots />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              {renderMenuItems(filteredNavItems, "main")}
             </div>
 
             <div className="">
@@ -347,7 +371,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontalDots />
                 )}
               </h2>
-              {renderMenuItems(othersItems, "others")}
+              {renderMenuItems(filteredOthersItems, "others")}
             </div>
           </div>
         </nav>
