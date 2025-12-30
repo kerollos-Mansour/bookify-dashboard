@@ -121,7 +121,12 @@ export default function DestinationForm({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) onCancel();
+            }}
+        >
             <div className="w-full max-w-md bg-white rounded-xl shadow-xl dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b border-gray-100 dark:border-gray-700">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
