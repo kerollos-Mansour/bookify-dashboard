@@ -89,34 +89,52 @@ export interface HotelsResponse {
 
 // Helper to remove empty strings and sensitive fields from payload
 const cleanPayload = (obj: any, exclude: string[] = []) => {
-  if (!obj || typeof obj !== 'object') return obj;
+  if (!obj || typeof obj !== "object") return obj;
 
-  const metadataFields = ['_id', '__v', 'createdAt', 'updatedAt', ...exclude];
-  const cleaned: any = Array.isArray(obj) ? [] : {};
+  if (Array.isArray(obj)) {
+    return obj
+      .map((item) => cleanPayload(item, exclude))
+      .filter((item) => item !== undefined);
+  }
+
+  const metadataFields = ["_id", "__v", "createdAt", "updatedAt", ...exclude];
+  const cleaned: Record<string, any> = {};
 
   Object.entries(obj).forEach(([key, value]) => {
-    if (metadataFields.includes(key)){
-      return;
-    } 
-    if (value === "" && key !== 'size'){
-      return;
-    } 
-    if (value === null || value === undefined){
-      return;
-    }
-    if (key === 'amenities' && Array.isArray(value)) {
+    if (metadataFields.includes(key)) return;
+    if (value === "" && key !== "size") return;
+    if (value === null || value === undefined) return;
+
+    if (key === "amenities" && Array.isArray(value)) {
       cleaned[key] = value.map((item: any) => item?._id || item);
       return;
     }
-    if (typeof value === 'object' && !Array.isArray(value)) {
-      const nested = cleanPayload(value);
-      if (Object.keys(nested).length > 0) cleaned[key] = nested;
+
+    if (typeof value === "object") {
+      const nested = cleanPayload(value, exclude);
+      if (
+        Array.isArray(nested)
+          ? nested.length > 0
+          : Object.keys(nested).length > 0
+      ) {
+        cleaned[key] = nested;
+      }
       return;
     }
+
     cleaned[key] = value;
   });
 
   return cleaned;
+};
+
+// Helper to safely extract data from API response
+const extractData = <T>(response: any, key?: string): T => {
+  const data = response.data?.data || response.data;
+  if (key) {
+    return data?.[key] || data;
+  }
+  return data;
 };
 
 export const hotelsApi = {
@@ -124,12 +142,20 @@ export const hotelsApi = {
   getAllHotels: async (params?: GetHotelsParams): Promise<HotelsResponse> => {
     try {
       const response = await apiClient.get("/hotels", { params });
-      return response.data.data;
+      const data = extractData<HotelsResponse>(response);
+
+      // Ensure we return a valid HotelsResponse structure
+      return {
+        hotels: data?.hotels || [],
+        page: data?.page || 1,
+        totalPages: data?.totalPages || 1,
+        totalHotels: data?.totalHotels || 0,
+      };
     } catch (error: any) {
       console.error("getAllHotels failed", {
         params,
         status: error.response?.status,
-        data: error.response?.data
+        responseData: error.response?.data,
       });
       throw error;
     }
@@ -139,9 +165,13 @@ export const hotelsApi = {
   getHotelById: async (id: string): Promise<Hotel> => {
     try {
       const response = await apiClient.get(`/hotels/${id}`);
-      return response.data.data.hotel;
+      return extractData<Hotel>(response, "hotel");
     } catch (error: any) {
-      console.error("getHotelById failed", { id, status: error.response?.status, data: error.response?.data });
+      console.error("getHotelById failed", {
+        id,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
       throw error;
     }
   },
@@ -150,9 +180,13 @@ export const hotelsApi = {
   createHotel: async (data: Partial<Hotel>): Promise<Hotel> => {
     try {
       const response = await apiClient.post("/hotels", data);
-      return response.data.data.hotel;
+      return extractData<Hotel>(response, "hotel");
     } catch (error: any) {
-      console.error("createHotel failed", { status: error.response?.status, data: error.response?.data });
+      console.error("createHotel failed", {
+        payload: data,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
       throw error;
     }
   },
@@ -162,9 +196,14 @@ export const hotelsApi = {
     try {
       const cleanedData = cleanPayload(data);
       const response = await apiClient.put(`/hotels/${id}`, cleanedData);
-      return response.data.data.hotel;
+      return extractData<Hotel>(response, "hotel");
     } catch (error: any) {
-      console.error("updateHotel failed", { id, status: error.response?.status, data: error.response?.data });
+      console.error("updateHotel failed", {
+        id,
+        payload: data,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
       throw error;
     }
   },
@@ -172,12 +211,12 @@ export const hotelsApi = {
   // Delete hotel
   deleteHotel: async (id: string): Promise<void> => {
     try {
-      const response = await apiClient.delete(`/hotels/${id}`);
+      await apiClient.delete(`/hotels/${id}`);
     } catch (error: any) {
       console.error("deleteHotel failed", {
         id,
         status: error.response?.status,
-        data: error.response?.data
+        responseData: error.response?.data,
       });
       throw error;
     }
@@ -187,9 +226,14 @@ export const hotelsApi = {
   getHotelRooms: async (hotelId: string): Promise<Room[]> => {
     try {
       const response = await apiClient.get(`/rooms/hotel/${hotelId}`);
-      return response.data.data.rooms || response.data.data;
+      const data = extractData<any>(response);
+      return data?.rooms || data || [];
     } catch (error: any) {
-      console.error("getHotelRooms failed", { hotelId, status: error.response?.status, data: error.response?.data });
+      console.error("getHotelRooms failed", {
+        hotelId,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
       throw error;
     }
   },
@@ -199,9 +243,13 @@ export const hotelsApi = {
     try {
       const cleanedData = cleanPayload(data);
       const response = await apiClient.post("/rooms", cleanedData);
-      return response.data.data.room;
+      return extractData<Room>(response, "room");
     } catch (error: any) {
-      console.error("createRoom failed", { status: error.response?.status, data: error.response?.data });
+      console.error("createRoom failed", {
+        payload: data,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
       throw error;
     }
   },
@@ -209,11 +257,16 @@ export const hotelsApi = {
   // Update room
   updateRoom: async (id: string, data: Partial<Room>): Promise<Room> => {
     try {
-      const cleanedData = cleanPayload(data, ['hotelId']);
+      const cleanedData = cleanPayload(data, ["hotelId"]);
       const response = await apiClient.put(`/rooms/${id}`, cleanedData);
-      return response.data.data.room;
+      return extractData<Room>(response, "room");
     } catch (error: any) {
-      console.error("updateRoom failed", { id, status: error.response?.status, data: error.response?.data });
+      console.error("updateRoom failed", {
+        id,
+        payload: data,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
       throw error;
     }
   },
@@ -223,7 +276,11 @@ export const hotelsApi = {
     try {
       await apiClient.delete(`/rooms/${id}`);
     } catch (error: any) {
-      console.error("deleteRoom failed", { id, status: error.response?.status, data: error.response?.data });
+      console.error("deleteRoom failed", {
+        id,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
       throw error;
     }
   },
@@ -232,9 +289,13 @@ export const hotelsApi = {
   getAllAmenities: async (): Promise<Amenity[]> => {
     try {
       const response = await apiClient.get("/amenities");
-      return response.data.data.amenities || response.data.data;
+      const data = extractData<any>(response);
+      return data?.amenities || data || [];
     } catch (error: any) {
-      console.error("getAllAmenities failed", { status: error.response?.status, data: error.response?.data });
+      console.error("getAllAmenities failed", {
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
       throw error;
     }
   },
