@@ -52,22 +52,37 @@ export interface Review {
   reviewDate?: string;
 }
 
-// Helper to remove empty strings from payload
-const cleanPayload = <T extends object>(data: Partial<T>) => {
+export interface ReviewsResponse {
+  reviews: Review[];
+  pagination: {
+    page?: number;
+    totalPages?: number;
+    total?: number;
+  };
+}
+
+const extractData = <T>(response: any, key?: string): T => {
+  const data = response.data?.data || response.data;
+  
+  if (key && data) {
+    return data[key] ?? data;
+  }
+  return data;
+};
+
+const cleanPayload = <T extends object>(data: Partial<T>): Partial<T> => {
   const cleaned: Partial<T> = { ...data };
   const fieldsToRemove = ["_id", "__v", "createdAt", "updatedAt"];
 
   Object.keys(cleaned).forEach((key) => {
     const k = key as keyof T;
-    // Remove if field is listed as immutable/internal
+    
     if (fieldsToRemove.includes(key)) {
       delete cleaned[k];
     }
-    // Remove if value is explicitly empty string, but keep 0 and false
     else if (cleaned[k] === "") {
       delete cleaned[k];
     }
-    // Remove null or undefined to avoid backend validation errors
     else if (cleaned[k] === null || cleaned[k] === undefined) {
       delete cleaned[k];
     }
@@ -77,93 +92,269 @@ const cleanPayload = <T extends object>(data: Partial<T>) => {
 };
 
 export const contentApi = {
-  // Destinations
-  getAllDestinations: async () => {
-    const response = await apiClient.get("/destinations");
-    return response.data.data.destinations;
+  // ==================== Destinations ====================
+  
+  getAllDestinations: async (): Promise<Destination[]> => {
+    try {
+      const response = await apiClient.get("/destinations");
+      const data = extractData<any>(response);
+      return data?.destinations || data || [];
+    } catch (error: any) {
+      console.error("getAllDestinations failed", {
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
   },
 
-  createDestination: async (data: Partial<Destination>) => {
-    const cleanedData = cleanPayload(data);
-    console.log("Creating Destination Payload:", cleanedData);
-    const response = await apiClient.post("/destinations", cleanedData);
-    return response.data.data.destination;
+  getDestinationById: async (id: string): Promise<Destination> => {
+    try {
+      const response = await apiClient.get(`/destinations/${id}`);
+      return extractData<Destination>(response, "destination");
+    } catch (error: any) {
+      console.error("getDestinationById failed", {
+        id,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
   },
 
-  updateDestination: async (id: string, data: Partial<Destination>) => {
-    const cleanedData = cleanPayload(data);
-    const response = await apiClient.patch(`/destinations/${id}`, cleanedData);
-    return response.data.data.destination;
+  createDestination: async (data: Partial<Destination>): Promise<Destination> => {
+    try {
+      const cleanedData = cleanPayload(data);
+      console.log("Creating Destination Payload:", cleanedData);
+      const response = await apiClient.post("/destinations", cleanedData);
+      return extractData<Destination>(response, "destination");
+    } catch (error: any) {
+      console.error("createDestination failed", {
+        payload: data,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
   },
 
-  deleteDestination: async (id: string) => {
-    const response = await apiClient.delete(`/destinations/${id}`);
-    return response.data;
+  updateDestination: async (id: string, data: Partial<Destination>): Promise<Destination> => {
+    try {
+      const cleanedData = cleanPayload(data);
+      const response = await apiClient.patch(`/destinations/${id}`, cleanedData);
+      return extractData<Destination>(response, "destination");
+    } catch (error: any) {
+      console.error("updateDestination failed", {
+        id,
+        payload: data,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
   },
 
-  // Categories
-  getAllCategories: async (includeInactive = false) => {
-    const params = includeInactive ? { includeInactive: true } : {};
-    const response = await apiClient.get("/categories", { params });
-    return response.data.data.categories;
+  deleteDestination: async (id: string): Promise<void> => {
+    try {
+      await apiClient.delete(`/destinations/${id}`);
+    } catch (error: any) {
+      console.error("deleteDestination failed", {
+        id,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
   },
 
-  getCategoryById: async (id: string) => {
-    const response = await apiClient.get(`/categories/${id}`);
-    return response.data.data.category;
+  // ==================== Categories ====================
+
+  getAllCategories: async (includeInactive = false): Promise<Category[]> => {
+    try {
+      const params = includeInactive ? { includeInactive: true } : {};
+      const response = await apiClient.get("/categories", { params });
+      const data = extractData<any>(response);
+      return data?.categories || data || [];
+    } catch (error: any) {
+      console.error("getAllCategories failed", {
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
   },
 
-  createCategory: async (data: Partial<Category>) => {
-    const cleanedData = cleanPayload(data);
-    const response = await apiClient.post("/categories", cleanedData);
-    return response.data.data;
+  getCategoryById: async (id: string): Promise<Category> => {
+    try {
+      const response = await apiClient.get(`/categories/${id}`);
+      return extractData<Category>(response, "category");
+    } catch (error: any) {
+      console.error("getCategoryById failed", {
+        id,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
   },
 
-  updateCategory: async (id: string, data: Partial<Category>) => {
-    const cleanedData = cleanPayload(data);
-    const response = await apiClient.patch(`/categories/${id}`, cleanedData);
-    return response.data.data.category;
+  createCategory: async (data: Partial<Category>): Promise<Category> => {
+    try {
+      const cleanedData = cleanPayload(data);
+      const response = await apiClient.post("/categories", cleanedData);
+      return extractData<Category>(response, "category");
+    } catch (error: any) {
+      console.error("createCategory failed", {
+        payload: data,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
   },
 
-  deleteCategory: async (id: string) => {
-    const response = await apiClient.delete(`/categories/${id}`);
-    return response.data;
+  updateCategory: async (id: string, data: Partial<Category>): Promise<Category> => {
+    try {
+      const cleanedData = cleanPayload(data);
+      const response = await apiClient.patch(`/categories/${id}`, cleanedData);
+      return extractData<Category>(response, "category");
+    } catch (error: any) {
+      console.error("updateCategory failed", {
+        id,
+        payload: data,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
   },
 
-  // Reviews
+  deleteCategory: async (id: string): Promise<void> => {
+    try {
+      await apiClient.delete(`/categories/${id}`);
+    } catch (error: any) {
+      console.error("deleteCategory failed", {
+        id,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
+  },
+
+  // ==================== Reviews ====================
+
   getAllReviews: async (params?: {
     status?: Review["status"];
     page?: number;
     limit?: number;
-  }) => {
-    const response = await apiClient.get("/reviews", { params });
-    const data = response.data;
-    return { reviews: data.data, pagination: data.pagination || {} };
-  },
-
-  approveReview: async (id: string) => {
-    const response = await apiClient.patch(`/reviews/${id}/approve`);
-    return response.data.data.review;
-  },
-
-  rejectReview: async (id: string) => {
-    const response = await apiClient.patch(`/reviews/${id}/reject`);
-    return response.data.data.review;
-  },
-
-  // Image upload
-  uploadImage: async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('image', file);
-    const response = await apiClient.post('/images/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      timeout: 30000,
-    });
-    if (response.data.status === 'success') {
-      return response.data.data.imageUrl;
+  }): Promise<ReviewsResponse> => {
+    try {
+      const response = await apiClient.get("/reviews", { params });
+      const rawData = response.data;
+      
+      // Handle different response structures
+      const data = rawData?.data || rawData;
+      const reviews = data?.reviews || (Array.isArray(data) ? data : []);
+      const pagination = rawData?.pagination || data?.pagination || {};
+      
+      return { reviews, pagination };
+    } catch (error: any) {
+      console.error("getAllReviews failed", {
+        params,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      // Return empty data instead of throwing to prevent UI crashes
+      return { reviews: [], pagination: {} };
     }
-    throw new Error(response.data.message || 'Upload failed');
+  },
+
+  getReviewById: async (id: string): Promise<Review> => {
+    try {
+      const response = await apiClient.get(`/reviews/${id}`);
+      return extractData<Review>(response, "review");
+    } catch (error: any) {
+      console.error("getReviewById failed", {
+        id,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
+  },
+
+  approveReview: async (id: string): Promise<Review> => {
+    try {
+      const response = await apiClient.patch(`/reviews/${id}/approve`);
+      return extractData<Review>(response, "review");
+    } catch (error: any) {
+      console.error("approveReview failed", {
+        id,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
+  },
+
+  rejectReview: async (id: string): Promise<Review> => {
+    try {
+      const response = await apiClient.patch(`/reviews/${id}/reject`);
+      return extractData<Review>(response, "review");
+    } catch (error: any) {
+      console.error("rejectReview failed", {
+        id,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
+  },
+
+  deleteReview: async (id: string): Promise<void> => {
+    try {
+      await apiClient.delete(`/reviews/${id}`);
+    } catch (error: any) {
+      console.error("deleteReview failed", {
+        id,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
+  },
+
+  // ==================== Image Upload ====================
+
+  uploadImage: async (file: File): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      
+      const response = await apiClient.post("/images/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 30000,
+      });
+
+      // Handle different response structures
+      const data = response.data?.data || response.data;
+      
+      if (response.data?.status === "success" || data?.imageUrl) {
+        return data.imageUrl;
+      }
+      
+      throw new Error(response.data?.message || "Upload failed");
+    } catch (error: any) {
+      console.error("uploadImage failed", {
+        fileName: file.name,
+        fileSize: file.size,
+        status: error.response?.status,
+        responseData: error.response?.data,
+      });
+      throw error;
+    }
   },
 };
