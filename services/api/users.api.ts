@@ -6,7 +6,7 @@ export interface User {
   _id: string;
   username: string;
   email: string;
-  role: "user" | "admin";
+  role: "user" | "admin" | "vendor";
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -16,7 +16,7 @@ export interface GetUsersParams {
   page?: number;
   limit?: number;
   search?: string;
-  role?: "user" | "admin";
+  role?: "user" | "admin" | "vendor";
   isActive?: boolean;
 }
 

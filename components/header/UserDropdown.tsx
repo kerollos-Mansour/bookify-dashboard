@@ -7,6 +7,7 @@ const UserDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { logout } = useAuth();
+  const {user} = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -36,10 +37,10 @@ const UserDropdown: React.FC = () => {
         </div>
         <div className="hidden text-left lg:block">
           <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-            Admin User
+            {user?.username}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            admin@bookify.com
+            {user?.email}
           </p>
         </div>
         <svg
@@ -61,10 +62,10 @@ const UserDropdown: React.FC = () => {
         <div className="absolute right-0 z-50 mt-2 w-56 rounded-lg border border-gray-200 bg-white shadow-theme-lg dark:border-gray-800 dark:bg-gray-900">
           <div className="p-3 border-b border-gray-200 dark:border-gray-800">
             <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-              Admin User
+              {user?.username}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              admin@bookify.com
+              {user?.email}
             </p>
           </div>
           <div className="p-2">
