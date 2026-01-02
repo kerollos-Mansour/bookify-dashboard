@@ -25,7 +25,6 @@ interface BookingFormData {
     paymentMethod: string;
     checkIn: string;
     checkOut: string;
-    guests: number;
     pricePerNight: number;
     fees: number;
 }
@@ -220,20 +219,6 @@ export default function EditBookingModal({
                                             Bank Transfer
                                         </option>
                                     </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Number of Guests
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="guests"
-                                        value={formData.guests}
-                                        onChange={handleChange}
-                                        min="1"
-                                        className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-colors"
-                                    />
                                 </div>
                             </div>
                         </div>

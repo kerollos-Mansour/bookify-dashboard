@@ -213,7 +213,6 @@ export default function BookingsPage() {
                         : booking
                 )
             );
-            console.log(updatedData);
             toast.success("Booking updated successfully");
             closeEditModal();
         } catch (error) {
@@ -261,10 +260,6 @@ export default function BookingsPage() {
                     startDate: startDate || undefined,
                     searchBy: searchBy,
                 });
-                const newData = await bookingsApi.getBookingById(
-                    "69538482165d2597b7d60441"
-                );
-                console.log(newData);
                 // adjust this line if backend response shape is different
                 const bookingsArray = Array.isArray(data) ? data : [];
 
