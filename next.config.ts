@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
   },
 
   // Base path for the dashboard application
-  basePath: "/dashboard",
+  basePath: "",
 };
 
 export default nextConfig;

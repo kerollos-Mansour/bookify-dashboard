@@ -1,4 +1,8 @@
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, {
+  AxiosInstance,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 
 // Base API configuration
 const API_BASE_URL =
@@ -11,13 +15,12 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Important for cookies/sessions
+  withCredentials: true,
 });
 
 // Request interceptor - Add auth token to requests
 apiClient.interceptors.request.use(
-  (config) => {
-    // Get token from localStorage
+  (config: InternalAxiosRequestConfig) => {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
@@ -32,7 +35,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors globally and extract data
+// Response interceptor - Handle errors globally and refresh tokens
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     if (response.data && response.data.data) {
@@ -40,21 +43,66 @@ apiClient.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
-    // Handle common errors
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Handle 401 errors with token refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken =
+          typeof window !== "undefined"
+            ? localStorage.getItem("refreshToken")
+            : null;
+
+        if (refreshToken) {
+          const response = await axios.post(
+            `${API_BASE_URL}/auth/refresh-token`,
+            { refreshToken }
+          );
+
+          if (response.data && response.data.data) {
+            const { accessToken, refreshToken: newRefreshToken } =
+              response.data.data;
+
+            // Store new tokens
+            if (typeof window !== "undefined") {
+              localStorage.setItem("authToken", accessToken);
+              localStorage.setItem("refreshToken", newRefreshToken);
+            }
+
+            // Update the failed request with new token
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+            // Retry the original request
+            return apiClient(originalRequest);
+          }
+        }
+
+        // No refresh token or refresh failed - logout
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        }
+      } catch (refreshError) {
+        // Refresh token failed - logout
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+
+    // Handle other errors
     if (error.response) {
       switch (error.response.status) {
-        case 401:
-          // Unauthorized - redirect to login
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("authToken");
-            console.error("Unauthorized - please login again");
-            // Optionally redirect to login page
-            // window.location.href = "/login";
-          }
-          break;
         case 403:
-          // Forbidden
           console.error("Access forbidden - insufficient permissions");
           break;
         case 404:
