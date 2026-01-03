@@ -4,17 +4,30 @@ import apiClient from "./client";
 
 export interface Booking {
   _id: string;
-  userId: string;
-  hotelId: string;
+  userId: {
+    name: string;
+    username: string,
+    email: string,
+    phoneNo: string
+  } | null;
+  hotelId: {
+    name: string;
+    location: {
+      address: string,
+      city: string,
+      countryCode: string
+    };
+  } | null;
   roomId: string;
   checkIn: string;
   checkOut: string;
   nights: number;
   pricePerNight: number;
+  subTotal: number;
   totalPrice: number;
   guests: number;
   currency: string;
-  status: string;
+  status: "pending" | "confirmed" | "cancelled" | "completed";
   couponId: string;
   paymentStatus: string;
   paymentMethod: string;
@@ -22,14 +35,27 @@ export interface Booking {
   createdAt: string;
   fees: number;
   updatedAt: string;
+  bookingNumber: string
+}
+
+interface BookingFormData {
+    status: "pending" | "confirmed" | "cancelled" | "completed";
+    paymentStatus: "pending" | "paid" | "unpaid" | "failed";
+    paymentMethod: string;
+    checkIn: string;
+    checkOut: string;
+    guests: number;
+    pricePerNight: number;
+    fees: number;
 }
 
 export interface GetBookingsParams {
   page?: number;
   limit?: number;
   search?: string;
+  searchBy: "Booking Number" | "User Name" | "Hotel Name";
   status?: "pending" | "confirmed" | "cancelled" | "completed";
-  paymentStatus?: "pending" | "paid" | "failed";
+  paymentStatus?: "pending" | "paid" | "unpaid" | "failed";
   startDate?: string;
   endDate?: string;
 }
@@ -62,6 +88,10 @@ export const bookingsApi = {
   // Update booking status (Admin only)
   updateBookingStatus: async (id: string, status: Booking["status"]) => {
     const response = await apiClient.put(`/bookings/${id}/status`, { status });
+    return response.data;
+  },
+  updateBooking: async (id: string, newData: BookingFormData) => {
+    const response = await apiClient.put(`/bookings/${id}`, { newData });
     return response.data;
   },
 
