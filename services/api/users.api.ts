@@ -4,10 +4,12 @@ import apiClient from "./client";
 
 export interface User {
   _id: string;
-  username: string;
+  name: string;
   email: string;
   role: "user" | "admin" | "vendor";
   isActive: boolean;
+  phoneNo: string;
+  isBlocked: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,6 +56,12 @@ export const usersApi = {
   // Ban/Unban user
   toggleUserStatus: async (id: string) => {
     const response = await apiClient.patch(`/users/${id}/toggle-status`);
+    return response.data;
+  },
+
+  // NEW: Send reset password email to user
+  resetPassword: async (id: string) => {
+    const response = await apiClient.post(`/users/${id}/reset-password`);
     return response.data;
   },
 };
