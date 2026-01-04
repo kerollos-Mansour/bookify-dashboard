@@ -36,15 +36,20 @@ export const dashboardApi = {
         ]);
 
       // Extract arrays from responses
+      // Users endpoint returns { users: [], pagination: {} }
+      // Hotels endpoint returns array directly
+      // Bookings endpoint returns array directly
       const bookingsData = Array.isArray(bookingsResponse.data)
         ? bookingsResponse.data
-        : [];
-      const usersData = Array.isArray(usersResponse.data)
-        ? usersResponse.data
-        : [];
+        : bookingsResponse.data?.bookings || [];
+
+      const usersData =
+        usersResponse.data?.users ||
+        (Array.isArray(usersResponse.data) ? usersResponse.data : []);
+
       const hotelsData = Array.isArray(hotelsResponse.data)
         ? hotelsResponse.data
-        : [];
+        : hotelsResponse.data?.hotels || [];
 
       // Calculate active bookings
       const activeBookings = bookingsData.filter(

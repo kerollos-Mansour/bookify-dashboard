@@ -228,7 +228,7 @@ export default function HotelForm({
                                         <option value="Budget">Budget</option>
                                     </select>
                                 </div>
-                                <div className="space-y-1">
+                                {/* <div className="space-y-1">
                                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Rating (1-5)</label>
                                     <input
                                         type="number"
@@ -265,7 +265,7 @@ export default function HotelForm({
                                         onChange={handleChange}
                                         className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-2 text-sm focus:border-brand-500 focus:outline-hidden"
                                     />
-                                </div>
+                                </div> */}
                             </div>
 
                             <div className="space-y-4 sm:col-span-2">

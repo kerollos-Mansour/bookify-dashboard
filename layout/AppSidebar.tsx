@@ -88,7 +88,6 @@ const AppSidebar: React.FC = () => {
   const { user } = useAuth();
   const pathname = usePathname();
 
-
   // Filter menu items based on user role
   const filterByRole = (items: NavItem[]) => {
     return items.filter((item) => {
@@ -314,14 +313,14 @@ const AppSidebar: React.FC = () => {
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/logo.svg"
+                src="/images/logo/dark-logo.png"
                 alt="Bookify Logo"
                 width={150}
                 height={40}
               />
               <Image
                 className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
+                src="/images/logo/white-logo.png"
                 alt="Bookify Logo"
                 width={150}
                 height={40}
@@ -329,7 +328,7 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
+              src="/images/logo/logoItSelf.png"
               alt="Bookify"
               width={32}
               height={32}
