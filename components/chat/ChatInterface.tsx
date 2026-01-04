@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { io, Socket } from "socket.io-client";
-import Image from "next/image";
-
 interface User {
   id: string;
   username: string;
@@ -34,7 +32,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  console.log(currentUser)
+  console.log(currentUser);
   // Initialize Socket.io
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -44,11 +42,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
       return;
     }
 
-    const socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-      auth: { token },
-      reconnection: true,
-      reconnectionAttempts: 5,
-    });
+    const socketInstance = io(
+      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000",
+      {
+        auth: { token },
+        reconnection: true,
+        reconnectionAttempts: 5,
+      }
+    );
 
     socketInstance.on("connect", () => {
       console.log("✅ Socket connected:", socketInstance.id);
@@ -263,7 +264,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
                   );
                 })
               )}
-              
               <div ref={messagesEndRef} />
             </div>
 

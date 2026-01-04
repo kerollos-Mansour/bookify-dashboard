@@ -444,9 +444,9 @@ export default function UsersPage() {
                     <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
                       Phone Number
                     </th>
-                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
+                    {/* <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
                       Status
-                    </th>
+                    </th> */}
                     <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
                       Joined
                     </th>
@@ -511,7 +511,7 @@ export default function UsersPage() {
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                           {user.phoneNo || "N/A"}
                         </td>
-                        <td className="px-6 py-4">
+                        {/* <td className="px-6 py-4">
                           <span
                             className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
                               user.isBlocked
@@ -521,7 +521,7 @@ export default function UsersPage() {
                           >
                             {user.isBlocked ? "Banned" : "Active"}
                           </span>
-                        </td>
+                        </td> */}
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                           {user.createdAt
                             ? new Date(user.createdAt).toLocaleDateString()
@@ -544,7 +544,7 @@ export default function UsersPage() {
                             >
                               Reset Password
                             </button>
-                            <button
+                            {/* <button
                               onClick={() => toggleUserStatus(user)}
                               className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
                                 user.isBlocked
@@ -553,7 +553,7 @@ export default function UsersPage() {
                               }`}
                             >
                               {user.isBlocked ? "Unban" : "Ban"}
-                            </button>
+                            </button> */}
                           </div>
                         </td>
                       </tr>
@@ -651,48 +651,48 @@ export default function UsersPage() {
                     </div>
                   </div>
 
-                  {/* Account Status */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Account Status
-                    </label>
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center cursor-pointer">
-                        <div className="relative">
-                          <input
-                            type="checkbox"
-                            className="sr-only"
-                            checked={!editingUser.isBlocked}
-                            onChange={handleStatusChange}
-                          />
-                          <div
-                            className={`block w-12 h-6 rounded-full transition-colors ${
-                              !editingUser.isBlocked
-                                ? "bg-green-500"
-                                : "bg-red-500"
-                            }`}
-                          ></div>
-                          <div
-                            className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${
-                              !editingUser.isBlocked
-                                ? "transform translate-x-6"
-                                : ""
-                            }`}
-                          ></div>
-                        </div>
-                        <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">
-                          {!editingUser.isBlocked
-                            ? "Active Account"
-                            : "Banned Account"}
-                        </span>
-                      </label>
+                {/* Account Status
+                <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Account Status
+                </label>
+                <div className="flex items-center gap-4">
+                    <label className="flex items-center cursor-pointer">
+                    <div className="relative">
+                        <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={!editingUser.isBlocked}
+                        onChange={handleStatusChange}
+                        />
+                        <div
+                        className={`block w-12 h-6 rounded-full transition-colors ${
+                            !editingUser.isBlocked
+                            ? "bg-green-500"
+                            : "bg-red-500"
+                        }`}
+                        ></div>
+                        <div
+                        className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${
+                            !editingUser.isBlocked
+                            ? "transform translate-x-6"
+                            : ""
+                        }`}
+                        ></div>
                     </div>
-                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      {!editingUser.isBlocked
-                        ? "User can login and use the system normally"
-                        : "User cannot login or access the system"}
-                    </p>
-                  </div>
+                    <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                        {!editingUser.isBlocked
+                        ? "Active Account"
+                        : "Banned Account"}
+                    </span>
+                    </label>
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    {!editingUser.isBlocked
+                    ? "User can login and use the system normally"
+                    : "User cannot login or access the system"}
+                </p>
+                </div> */}
 
                   {/* Additional Info Display (Read-only) */}
                   <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
