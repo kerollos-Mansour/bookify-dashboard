@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import ChatInterface from "@/components/chat/ChatInterface";
+import ChatInterface, { User as ChatUser } from "@/components/chat/ChatInterface";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ChatPage() {
@@ -23,6 +23,13 @@ export default function ChatPage() {
     );
   }
 
+  const chatUser: ChatUser = {
+    id: user._id || user._id || "",  // Handle both _id and id
+    username: user.username || user.username || "User",
+    email: user.email || "",
+    role: user.role,
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -39,7 +46,7 @@ export default function ChatPage() {
 
       {/* Chat Container */}
       <div className="h-[calc(100vh-180px)] min-h-[500px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-        <ChatInterface currentUser={user} />
+        <ChatInterface currentUser={chatUser} />
       </div>
     </div>
   );

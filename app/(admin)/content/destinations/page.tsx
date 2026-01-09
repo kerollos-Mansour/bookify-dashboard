@@ -3,8 +3,21 @@
 import React, { useState, useEffect } from "react";
 import { Destination, contentApi } from "@/services/api/content.api";
 import DestinationForm from "@/components/destinations/DestinationForm";
-
 import { toast } from "react-hot-toast";
+
+interface DestinationsApiResponse {
+  destinations?: Destination[];
+  data?: Destination[];
+}
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
 
 export default function DestinationsPage() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
@@ -16,13 +29,19 @@ export default function DestinationsPage() {
   const fetchDestinations = async () => {
     try {
       setIsLoading(true);
-      const data = await contentApi.getAllDestinations();
+      const data = await contentApi.getAllDestinations() as Destination[] | DestinationsApiResponse;
+      
       if (Array.isArray(data)) {
         setDestinations(data);
-      } else if (data?.destinations && Array.isArray(data.destinations)) {
-        setDestinations(data.destinations);
-      } else if (data?.data && Array.isArray(data.data)) {
-        setDestinations(data.data);
+      } else if (data && typeof data === "object") {
+        if ("destinations" in data && Array.isArray(data.destinations)) {
+          setDestinations(data.destinations);
+        } else if ("data" in data && Array.isArray(data.data)) {
+          setDestinations(data.data);
+        } else {
+          console.error("Unexpected data format", data);
+          setDestinations([]);
+        }
       } else {
         console.error("Unexpected data format", data);
         setDestinations([]);
@@ -47,8 +66,9 @@ export default function DestinationsPage() {
       await fetchDestinations();
       setIsFormOpen(false);
       toast.success("Destination created successfully");
-    } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to create destination";
+    } catch (err) {
+      const apiError = err as ApiError;
+      const message = apiError.response?.data?.message || "Failed to create destination";
       toast.error(message);
       console.error(err);
     }
@@ -62,8 +82,9 @@ export default function DestinationsPage() {
       setIsFormOpen(false);
       setEditingDestination(undefined);
       toast.success("Destination updated successfully");
-    } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to update destination";
+    } catch (err) {
+      const apiError = err as ApiError;
+      const message = apiError.response?.data?.message || "Failed to update destination";
       toast.error(message);
       console.error(err);
     }
@@ -81,8 +102,9 @@ export default function DestinationsPage() {
                 await contentApi.deleteDestination(id);
                 await fetchDestinations();
                 toast.success("Destination deleted");
-              } catch (err: any) {
-                const message = err.response?.data?.message || "Failed to delete destination";
+              } catch (err) {
+                const apiError = err as ApiError;
+                const message = apiError.response?.data?.message || "Failed to delete destination";
                 toast.error(message);
                 console.error(err);
               }
@@ -113,8 +135,9 @@ export default function DestinationsPage() {
         d._id === destination._id ? { ...d, bestSeller: !d.bestSeller } : d
       ));
       toast.success(destination.bestSeller ? "Removed from best sellers" : "Added to best sellers");
-    } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to update status";
+    } catch (err) {
+      const apiError = err as ApiError;
+      const message = apiError.response?.data?.message || "Failed to update status";
       toast.error(message);
       console.error(err);
     }
@@ -221,8 +244,6 @@ export default function DestinationsPage() {
                   </span>
                 )}
               </div>
-
-
 
               <div className="mt-auto pt-4 flex gap-2">
                 <button

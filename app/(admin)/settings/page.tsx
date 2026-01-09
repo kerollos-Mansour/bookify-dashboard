@@ -107,9 +107,9 @@ export default function SettingsPage() {
     setModalMode("edit");
     setSelectedUser(user);
     setFormData({
-      name: user.username || "", // simplified mapping
+      name: user.name || "", // simplified mapping
       email: user.email,
-      username: user.username,
+      username: user.name,
       password: "",
     });
     setIsModalOpen(true);

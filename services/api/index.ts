@@ -24,3 +24,5 @@ export type {
   RevenueData,
   BookingStatusData,
 } from "./dashboard.api";
+export type {BookingFormData} from "./bookings.api";
+export type {ApiError} from "./error.api";

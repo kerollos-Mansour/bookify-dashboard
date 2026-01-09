@@ -7,8 +7,69 @@ import { toast } from "react-hot-toast";
 
 type TabStatus = "pending" | "approved" | "rejected";
 
+interface PopulatedUser {
+  _id: string;
+  username?: string;
+  name?: string;
+  email?: string;
+}
+
+interface PopulatedHotel {
+  _id: string;
+  name: string;
+}
+
+interface PopulatedReview extends Omit<Review, "userid" | "hotelid"> {
+  userid: string | PopulatedUser | null;
+  hotelid: string | PopulatedHotel | null;
+  reviewDate?: string; // Alternative date field
+}
+
+const isPopulatedUser = (user: string | PopulatedUser | null): user is PopulatedUser => {
+  return user !== null && typeof user === "object" && ("username" in user || "name" in user);
+};
+
+const isPopulatedHotel = (hotel: string | PopulatedHotel | null): hotel is PopulatedHotel => {
+  return hotel !== null && typeof hotel === "object" && "name" in hotel;
+};
+
+const getUserDisplayName = (userid: PopulatedReview["userid"]): string => {
+  if (!userid) return "Anonymous";
+  if (isPopulatedUser(userid)) {
+    return userid.username || userid.name || "Anonymous";
+  }
+  return String(userid);
+};
+
+const getUserInitials = (userid: PopulatedReview["userid"]): string => {
+  const name = getUserDisplayName(userid);
+  return name.substring(0, 2).toUpperCase();
+};
+
+const getHotelName = (hotelid: PopulatedReview["hotelid"]): string => {
+  if (!hotelid) return "Unknown Hotel";
+  if (isPopulatedHotel(hotelid)) {
+    return hotelid.name;
+  }
+  return String(hotelid);
+};
+
+const getReviewDate = (review: PopulatedReview): string => {
+  try {
+    const dateString = review.createdAt || review.reviewDate;
+    if (!dateString) return "Unknown date";
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid date";
+    
+    return formatDistanceToNow(date, { addSuffix: true });
+  } catch {
+    return "Invalid date";
+  }
+};
+
 export default function ReviewsPage() {
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<PopulatedReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabStatus>("pending");
 
@@ -21,7 +82,7 @@ export default function ReviewsPage() {
     try {
       const data = await contentApi.getAllReviews({ status: activeTab });
       if (data && data.reviews) {
-        setReviews(data.reviews);
+        setReviews(data.reviews as PopulatedReview[]);
       } else {
         setReviews([]);
       }
@@ -74,10 +135,11 @@ export default function ReviewsPage() {
           <button
             key={tab.value}
             onClick={() => setActiveTab(tab.value)}
-            className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.value
-              ? "text-brand-500 border-brand-500"
-              : "text-gray-500 border-transparent hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              }`}
+            className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+              activeTab === tab.value
+                ? "text-brand-500 border-brand-500"
+                : "text-gray-500 border-transparent hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
           >
             {tab.label}
           </button>
@@ -101,24 +163,15 @@ export default function ReviewsPage() {
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-10 h-10 text-white rounded-full bg-brand-500">
                       <span className="text-sm font-medium">
-                        {((review.userid as any)?.username || (review.userid as any)?.name || (review.userid as string) || "JD").substring(0, 2).toUpperCase()}
+                        {getUserInitials(review.userid)}
                       </span>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                        {(review.userid as any)?.username || (review.userid as any)?.name || (review.userid as string) || "Anonymous"}
+                        {getUserDisplayName(review.userid)}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {(review.hotelid as any)?.name || (review.hotelid as string) || "Unknown Hotel"} •{" "}
-                        {(() => {
-                          try {
-                            const date = new Date(review.createdAt || (review as any).reviewDate);
-                            if (isNaN(date.getTime())) return "Invalid date";
-                            return formatDistanceToNow(date, { addSuffix: true });
-                          } catch (e) {
-                            return "Invalid date";
-                          }
-                        })()}
+                        {getHotelName(review.hotelid)} • {getReviewDate(review)}
                       </p>
                     </div>
                   </div>
@@ -126,10 +179,11 @@ export default function ReviewsPage() {
                     {[1, 2, 3, 4, 5].map((star) => (
                       <svg
                         key={star}
-                        className={`w-5 h-5 ${star <= review.rating
-                          ? "text-warning-500"
-                          : "text-gray-300 dark:text-gray-700"
-                          }`}
+                        className={`w-5 h-5 ${
+                          star <= review.rating
+                            ? "text-warning-500"
+                            : "text-gray-300 dark:text-gray-700"
+                        }`}
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -162,10 +216,11 @@ export default function ReviewsPage() {
                 {activeTab !== "pending" && (
                   <div className="ml-4">
                     <span
-                      className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${activeTab === "approved"
-                        ? "bg-success-50 text-success-600 dark:bg-success-500/20 dark:text-success-400"
-                        : "bg-error-50 text-error-600 dark:bg-error-500/20 dark:text-error-400"
-                        }`}
+                      className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                        activeTab === "approved"
+                          ? "bg-success-50 text-success-600 dark:bg-success-500/20 dark:text-success-400"
+                          : "bg-error-50 text-error-600 dark:bg-error-500/20 dark:text-error-400"
+                      }`}
                     >
                       {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                     </span>

@@ -1,45 +1,60 @@
 "use client";
 
-import React, { useState, useEffect, use, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { hotelsApi, Hotel, Room } from "@/services/api/hotels.api";
 import RoomsTable from "@/components/rooms/RoomsTable";
 import RoomForm from "@/components/rooms/RoomForm";
-import Link from "next/link";
 import toast from "react-hot-toast";
+import { ApiError } from "@/services/api";
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default function HotelRoomsPage({ params }: PageProps) {
-  const { id } = use(params);
-  const [hotel, setHotel] = useState<Hotel | null>(null);
+export default function RoomsPage() {
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [selectedHotelId, setSelectedHotelId] = useState<string>("");
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>("All Status");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isHotelsLoading, setIsHotelsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
 
-  const fetchData = useCallback(async () => {
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        const response = await hotelsApi.getAllHotels({ limit: 100 });
+        setHotels(response.hotels);
+      } catch (error) {
+        console.error("Error fetching hotels:", error);
+        toast.error("Failed to load hotels list");
+      } finally {
+        setIsHotelsLoading(false);
+      }
+    };
+    fetchHotels();
+  }, []);
+
+  // Fetch rooms when hotel changes
+  const fetchRooms = useCallback(async () => {
+    if (!selectedHotelId) {
+      setRooms([]);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const [hotelData, roomsData] = await Promise.all([
-        hotelsApi.getHotelById(id),
-        hotelsApi.getHotelRooms(id),
-      ]);
-      setHotel(hotelData);
+      const roomsData = await hotelsApi.getHotelRooms(selectedHotelId);
       setRooms(roomsData);
     } catch (error) {
-      console.error("Error fetching hotel rooms:", error);
-      toast.error("Failed to load hotel rooms");
+      console.error("Error fetching rooms:", error);
+      toast.error("Failed to load rooms for this hotel");
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [selectedHotelId]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchRooms();
+  }, [fetchRooms]);
 
   const handleEdit = (room: Room) => {
     setEditingRoom(room);
@@ -47,43 +62,44 @@ export default function HotelRoomsPage({ params }: PageProps) {
   };
 
   const handleAdd = () => {
+    if (!selectedHotelId) {
+      toast.error("Please select a hotel first");
+      return;
+    }
     setEditingRoom(null);
     setIsModalOpen(true);
   };
 
   const handleDelete = async (roomId: string) => {
-    toast(
-      (t) => (
-        <div className="flex flex-col gap-2">
-          <p className="font-medium">Delete this room?</p>
-          <div className="flex gap-2">
-            <button
-              onClick={async () => {
-                toast.dismiss(t.id);
-                try {
-                  await hotelsApi.deleteRoom(roomId);
-                  toast.success("Room deleted successfully");
-                  fetchData();
-                } catch (error) {
-                  console.error("Error deleting room:", error);
-                  toast.error("Failed to delete room");
-                }
-              }}
-              className="rounded bg-red-500 px-3 py-1 text-xs text-white hover:bg-red-600"
-            >
-              Delete
-            </button>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="rounded bg-gray-200 px-3 py-1 text-xs text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200"
-            >
-              Cancel
-            </button>
-          </div>
+    toast((t) => (
+      <div className="flex flex-col gap-2">
+        <p className="font-medium">Delete this room?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await hotelsApi.deleteRoom(roomId);
+                toast.success("Room deleted successfully");
+                fetchRooms();
+              } catch (error) {
+                console.error("Error deleting room:", error);
+                toast.error("Failed to delete room");
+              }
+            }}
+            className="rounded bg-red-500 px-3 py-1 text-xs text-white hover:bg-red-600"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="rounded bg-gray-200 px-3 py-1 text-xs text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </button>
         </div>
-      ),
-      { duration: 5000 }
-    );
+      </div>
+    ), { duration: 5000 });
   };
 
   const handleFormSubmit = async (data: Partial<Room>) => {
@@ -93,52 +109,36 @@ export default function HotelRoomsPage({ params }: PageProps) {
         await hotelsApi.updateRoom(editingRoom._id, data);
         toast.success("Room updated successfully");
       } else {
-        await hotelsApi.createRoom({ ...data, hotelId: id });
+        await hotelsApi.createRoom({ ...data, hotelId: selectedHotelId });
         toast.success("Room created successfully");
       }
       setIsModalOpen(false);
-      fetchData();
-    } catch (error: any) {
+      fetchRooms();
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error("Error saving room:", error);
-      toast.error(error.response?.data?.message || "Failed to save room");
+      toast.error(apiError.response?.data?.message || "Failed to save room");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const filteredRooms = rooms.filter((room) => {
+    if (statusFilter === "All Status") return true;
+    return room.status.toLowerCase() === statusFilter.toLowerCase();
+  });
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/hotels"
-            className="p-2 -ml-2 text-gray-500 hover:text-brand-500 transition-colors"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
-              {hotel ? `${hotel.name} - Rooms` : "Manage Rooms"}
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {hotel
-                ? `Location: ${hotel.location.city}, ${hotel.location.countryCode}`
-                : "Manage room inventory for this property"}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
+            Room Inventory
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Manage room types, pricing, and availability
+          </p>
         </div>
         <button
           onClick={handleAdd}
@@ -148,62 +148,50 @@ export default function HotelRoomsPage({ params }: PageProps) {
         </button>
       </div>
 
-      {/* Stats Overview */}
-      {hotel && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-          <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              Total Rooms
-            </p>
-            <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-              {rooms.length}
-            </p>
-          </div>
-          <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              Property Type
-            </p>
-            <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white capitalize">
-              {hotel.type}
-            </p>
-          </div>
-          <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Price Range
-                </p>
-                <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-                  {hotel.lowRate && hotel.highRate
-                    ? `$${hotel.lowRate} - $${hotel.highRate}`
-                    : "No rooms"}
-                </p>
-              </div>
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Calculated from rooms
-            </p>
-          </div>
-          <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              Rating
-            </p>
-            <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-              {hotel.hotelRating || 0}/5
-            </p>
-          </div>
+      {/* Hotel Selector and Filters */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-2">
+          <select
+            value={selectedHotelId}
+            onChange={(e) => setSelectedHotelId(e.target.value)}
+            disabled={isHotelsLoading}
+            className="h-11 rounded-lg border border-gray-200 bg-white dark:bg-gray-900 px-4 text-sm text-gray-800 focus:border-brand-500 focus:outline-hidden focus:ring-4 focus:ring-brand-500/10 dark:border-gray-800 dark:text-white/90 transition-all cursor-pointer min-w-[200px]"
+          >
+            <option value="">Select Hotel</option>
+            {hotels.map((hotel) => (
+              <option key={hotel._id} value={hotel._id}>
+                {hotel.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-11 rounded-lg border border-gray-200 bg-white dark:bg-gray-900 px-4 text-sm text-gray-800 focus:border-brand-500 focus:outline-hidden focus:ring-4 focus:ring-brand-500/10 dark:border-gray-800 dark:text-white/90 transition-all cursor-pointer"
+          >
+            <option>All Status</option>
+            <option value="available">Available</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="occupied">Occupied</option>
+          </select>
         </div>
+      </div>
+
+      {!selectedHotelId ? (
+        <div className="p-12 text-center bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:border-gray-800">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Select a hotel to view and manage its room inventory.
+          </p>
+        </div>
+      ) : (
+        <RoomsTable
+          rooms={filteredRooms}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       )}
 
-      {/* Rooms Table */}
-      <RoomsTable
-        rooms={rooms}
-        isLoading={isLoading}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      {/* Room Form Modal */}
       <RoomForm
         isOpen={isModalOpen}
         room={editingRoom}

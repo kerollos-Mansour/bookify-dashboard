@@ -9,7 +9,7 @@ export interface LoginResponse {
     id?: string;
     username: string;
     email: string;
-    role?: "user" | "admin";
+    role?: "user" | "admin" | "vendor";
     isAdmin?: boolean;
   };
 }

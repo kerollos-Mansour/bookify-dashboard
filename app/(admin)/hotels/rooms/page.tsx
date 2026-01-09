@@ -5,6 +5,7 @@ import { hotelsApi, Hotel, Room } from "@/services/api/hotels.api";
 import RoomsTable from "@/components/rooms/RoomsTable";
 import RoomForm from "@/components/rooms/RoomForm";
 import toast from "react-hot-toast";
+import { ApiError } from "@/services/api";
 
 export default function RoomsPage() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
@@ -102,6 +103,7 @@ export default function RoomsPage() {
   };
 
   const handleFormSubmit = async (data: Partial<Room>) => {
+    const apiError = Error as ApiError;
     setIsSubmitting(true);
     try {
       if (editingRoom) {
@@ -113,9 +115,9 @@ export default function RoomsPage() {
       }
       setIsModalOpen(false);
       fetchRooms();
-    } catch (error: any) {
+    } catch (error ) {
       console.error("Error saving room:", error);
-      toast.error(error.response?.data?.message || "Failed to save room");
+      toast.error(apiError.response?.data?.message || "Failed to save room");
     } finally {
       setIsSubmitting(false);
     }

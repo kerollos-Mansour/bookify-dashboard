@@ -2,11 +2,18 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { io, Socket } from "socket.io-client";
-interface User {
+
+export interface User {
   id: string;
   username: string;
   email: string;
   role?: string;
+}
+
+interface ActiveUser {
+  userId: string;
+  username?: string;
+  socketId?: string;
 }
 
 interface Message {
@@ -24,15 +31,17 @@ interface ChatInterfaceProps {
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [activeUsers, setActiveUsers] = useState<any[]>([]); // Adjust type as needed based on backend
+  const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   console.log(currentUser);
+
   // Initialize Socket.io
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -65,34 +74,34 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
       console.error("❌ Connection error:", error.message);
       setIsConnected(false);
 
-      // Handle authentication errors
       if (
         error.message.includes("token") ||
         error.message.includes("Authentication")
       ) {
         localStorage.removeItem("authToken");
-        // Optionally redirect to login
       }
     });
 
-    socketInstance.on("update_user_list", (users) => {
+    // ✅ Type the users parameter
+    socketInstance.on("update_user_list", (users: ActiveUser[]) => {
       setActiveUsers(users.filter((u) => u.userId !== currentUser.id));
     });
 
-    socketInstance.on("chat:message", (message) => {
+    socketInstance.on("chat:message", (message: Message) => {
       setMessages((prev) => [...prev, message]);
     });
 
-    socketInstance.on("chat:history", (history) => {
+    socketInstance.on("chat:history", (history: Message[]) => {
       setMessages(history);
     });
 
-    socketInstance.on("chat:typing", ({ userId, isTyping: typing }) => {
-      // Need to check against selected user
-      if (userId !== selectedUser?.id) return;
-
-      setIsTyping(typing);
-    });
+    socketInstance.on(
+      "chat:typing",
+      ({ userId, isTyping: typing }: { userId: string; isTyping: boolean }) => {
+        if (userId !== selectedUser?.id) return;
+        setIsTyping(typing);
+      }
+    );
 
     setSocket(socketInstance);
 
@@ -100,6 +109,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
       socketInstance.removeAllListeners();
       socketInstance.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser.id]);
 
   // Scroll to bottom on new message
@@ -119,7 +129,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
     setInputText("");
   };
 
-  const handleUserSelect = (user: any) => {
+  // ✅ FIX 2: Use ActiveUser type instead of any
+  const handleUserSelect = (user: ActiveUser) => {
     setSelectedUser({
       id: user.userId,
       username: user.username || "Unknown",
@@ -132,8 +143,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
 
     setMessages([]);
   };
-
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
@@ -215,6 +224,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
               <h3 className="font-semibold text-gray-800 dark:text-white">
                 {selectedUser.username}
               </h3>
+              {isTyping && (
+                <span className="text-xs text-gray-400 italic">typing...</span>
+              )}
             </div>
 
             {/* Messages */}
@@ -225,18 +237,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
                 </div>
               ) : (
                 messages.map((msg, idx) => {
-                  console.log("Message Debug:", {
-                    msgSenderId: msg.senderId,
-                    currentUserId: currentUser.id,
-                    typeOfMsgSender: typeof msg.senderId,
-                    typeOfCurrentUser: typeof currentUser.id,
-                    areEqual: msg.senderId === currentUser.id,
-                  });
-
                   const isOwn = msg.senderId === currentUser.id;
                   return (
                     <div
-                      key={idx}
+                      key={msg._id || idx}
                       className={`flex ${
                         isOwn ? "justify-end" : "justify-start"
                       }`}

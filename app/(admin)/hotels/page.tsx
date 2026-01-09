@@ -5,6 +5,7 @@ import { Hotel, hotelsApi, GetHotelsParams } from "@/services/api/hotels.api";
 import HotelsTable from "@/components/hotels/HotelsTable";
 import HotelForm from "@/components/hotels/HotelForm";
 import toast from "react-hot-toast";
+import { ApiError } from "@/services/api";
 
 export default function HotelsPage() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
@@ -126,9 +127,10 @@ export default function HotelsPage() {
       }
       setIsModalOpen(false);
       fetchHotels();
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error("Error saving hotel:", error);
-      toast.error(error.response?.data?.message || "Failed to save hotel");
+      toast.error(apiError.response?.data?.message || "Failed to save hotel");
     } finally {
       setIsSubmitting(false);
     }

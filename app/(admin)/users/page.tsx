@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { usersApi, type User } from "@/services/api";
+import { ApiError, usersApi, type User } from "@/services/api";
 import { toast, Toaster } from "react-hot-toast";
 
 export default function UsersPage() {
@@ -12,7 +12,6 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-
   // NEW: States for reset password functionality
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
 
@@ -40,12 +39,13 @@ export default function UsersPage() {
 
       setAllUsers(users);
       setFilteredUsers(users);
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error("Error fetching users:", error);
 
-      if (error.message === "Network Error") {
+      if (apiError.message === "Network Error") {
         setError("Cannot connect to server. Make sure backend is running.");
-      } else if (error.response?.status === 404) {
+      } else if (apiError.response?.status === 404) {
         setError("API endpoint not found.");
       } else {
         setError("Failed to load users. Please try again.");
@@ -124,9 +124,10 @@ export default function UsersPage() {
       });
 
       closeEditModal();
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error("Error updating user:", error);
-      const errorMessage = error.message || "Unknown error";
+      const errorMessage = apiError.response?.data?.message || "Unknown error";
       toast.error(`Failed to update user: ${errorMessage}`, {
         duration: 4000,
       });
@@ -152,9 +153,10 @@ export default function UsersPage() {
       });
 
       closeResetPasswordModal();
-    } catch (error: any) {
+    } catch (error) {
+       const apiError = error as ApiError;
       console.error("Error resetting password:", error);
-      const errorMessage = error.message || "Unknown error";
+      const errorMessage = apiError.response?.data?.message || "Unknown error";
       toast.error(`Failed to send reset email: ${errorMessage}`, {
         duration: 4000,
       });
@@ -189,9 +191,10 @@ export default function UsersPage() {
         duration: 3000,
         position: "top-right",
       });
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error(`Error ${action} user:`, error);
-      const errorMessage = error.message || "Unknown error";
+      const errorMessage = apiError.response?.data?.message || "Unknown error";
       toast.error(`Failed to ${action} user: ${errorMessage}`);
     }
   }, []);

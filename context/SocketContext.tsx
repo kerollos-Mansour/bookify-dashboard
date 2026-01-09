@@ -14,12 +14,16 @@ interface SocketContextType {
   isConnected: boolean;
 }
 
-const SocketContext = createContext<SocketContextType | null>(null);
+const SocketContext = createContext<SocketContextType | null>({
+  socket:null,
+  isConnected:false  
+});
 
 const SOCKET_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
+  // const socket = useRef<Socket | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -55,18 +59,20 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       setIsConnected(false);
     });
 
-    setSocket(newSocket);
+    const timeoutId = setTimeout(() => {
+      setSocket(newSocket)
+    }, 0);
 
     return () => {
       console.log("Cleaning up dashboard socket connection");
       newSocket.close();
-      setSocket(null);
-      setIsConnected(false);
+      // setIsConnected(false);
+      clearTimeout(timeoutId);
     };
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected }}>
+    <SocketContext.Provider value={{socket,isConnected}}> 
       {children}
     </SocketContext.Provider>
   );

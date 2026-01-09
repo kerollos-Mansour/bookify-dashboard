@@ -6,16 +6,16 @@ export interface Booking {
   _id: string;
   userId: {
     name: string;
-    username: string,
-    email: string,
-    phoneNo: string
+    username: string;
+    email: string;
+    phoneNo: string;
   } | null;
   hotelId: {
     name: string;
     location: {
-      address: string,
-      city: string,
-      countryCode: string
+      address: string;
+      city: string;
+      countryCode: string;
     };
   } | null;
   roomId: string;
@@ -35,18 +35,18 @@ export interface Booking {
   createdAt: string;
   fees: number;
   updatedAt: string;
-  bookingNumber: string
+  bookingNumber: string;
 }
 
-interface BookingFormData {
-    status: "pending" | "confirmed" | "cancelled" | "completed";
-    paymentStatus: "pending" | "paid" | "unpaid" | "failed";
-    paymentMethod: string;
-    checkIn: string;
-    checkOut: string;
-    guests: number;
-    pricePerNight: number;
-    fees: number;
+export interface BookingFormData {
+  status: "pending" | "confirmed" | "cancelled" | "completed";
+  paymentStatus: "pending" | "paid" | "unpaid" | "failed";
+  paymentMethod: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  pricePerNight: number;
+  fees: number;
 }
 
 export interface GetBookingsParams {

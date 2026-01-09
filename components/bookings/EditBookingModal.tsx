@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { Booking } from "@/services/api";
+import { Booking ,BookingFormData } from "@/services/api";
 
 function formatDateForInput(dateString: string) {
     const date = new Date(dateString);
@@ -17,16 +17,6 @@ function calculateNights(checkIn: string, checkOut: string): number {
     const diffTime = checkOutDate.getTime() - checkInDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return Math.max(1, diffDays);
-}
-
-interface BookingFormData {
-    status: "pending" | "confirmed" | "cancelled" | "completed";
-    paymentStatus: "pending" | "paid" | "unpaid" | "failed";
-    paymentMethod: string;
-    checkIn: string;
-    checkOut: string;
-    pricePerNight: number;
-    fees: number;
 }
 
 interface EditBookingModalProps {

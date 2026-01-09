@@ -5,6 +5,7 @@ import apiClient from "./client";
 export interface User {
   _id: string;
   name: string;
+  username:string;
   email: string;
   role: "user" | "admin" | "vendor";
   isActive: boolean;
