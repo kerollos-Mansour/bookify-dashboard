@@ -4,9 +4,10 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
+import { API_CONFIG } from "../../config/api.config";
+
 // Base API configuration
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api/v1";
+const API_BASE_URL = API_CONFIG.BASE_URL;
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({

@@ -15,12 +15,13 @@ interface SocketContextType {
 }
 
 const SocketContext = createContext<SocketContextType | null>({
-  socket:null,
-  isConnected:false  
+  socket: null,
+  isConnected: false,
 });
 
-const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
+import { API_CONFIG } from "../config/api.config";
+
+const SOCKET_URL = API_CONFIG.SOCKET_URL;
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   // const socket = useRef<Socket | null>(null);
@@ -60,7 +61,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     });
 
     const timeoutId = setTimeout(() => {
-      setSocket(newSocket)
+      setSocket(newSocket);
     }, 0);
 
     return () => {
@@ -72,7 +73,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <SocketContext.Provider value={{socket,isConnected}}> 
+    <SocketContext.Provider value={{ socket, isConnected }}>
       {children}
     </SocketContext.Provider>
   );

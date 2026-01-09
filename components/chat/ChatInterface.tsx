@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { io, Socket } from "socket.io-client";
+import { API_CONFIG } from "../../config/api.config";
 
 export interface User {
   id: string;
@@ -51,14 +52,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentUser }) => {
       return;
     }
 
-    const socketInstance = io(
-      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000",
-      {
-        auth: { token },
-        reconnection: true,
-        reconnectionAttempts: 5,
-      }
-    );
+    const socketInstance = io(API_CONFIG.SOCKET_URL, {
+      auth: { token },
+      reconnection: true,
+      reconnectionAttempts: 5,
+    });
 
     socketInstance.on("connect", () => {
       console.log("✅ Socket connected:", socketInstance.id);
