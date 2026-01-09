@@ -411,3 +411,29 @@ export const HorizontalDots = () => (
     />
   </svg>
 );
+
+export const PlaneIcon = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M2 12h20M2 12l5-5M2 12l5 5M22 12l-5-5M22 12l-5 5"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      opacity="0"
+    />
+    <path
+      d="M22 2l-11.5 11.5L2 12l5.5-2.5 10-6.5L22 2zM12.5 11.5l-2.5 2.5-1 4 4-1 2.5-2.5"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);

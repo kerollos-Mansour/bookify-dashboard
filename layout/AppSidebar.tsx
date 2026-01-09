@@ -15,6 +15,7 @@ import {
   CogIcon,
   ChevronDownIcon,
   HorizontalDots,
+  PlaneIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
 
@@ -50,6 +51,14 @@ const navItems: NavItem[] = [
     icon: <CalendarIcon />,
     name: "Booking Management",
     path: "/bookings",
+  },
+  {
+    icon: <PlaneIcon />,
+    name: "Flight Management",
+    subItems: [
+      { name: "Flights List", path: "/flights", pro: false },
+      { name: "Flight Bookings", path: "/flight-bookings", pro: false },
+    ],
   },
   {
     icon: <CurrencyDollarIcon />,
